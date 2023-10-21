@@ -1,6 +1,7 @@
+
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -9,22 +10,23 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:to_do_app/UI/notification_page.dart';
 import 'package:to_do_app/models/task.dart';
 
+@immutable
 class NotifyHelper {
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  final _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   final BehaviorSubject<String> notificationSubject =
       BehaviorSubject<String>();
 
-  Future<void> scheduledNotification(int hour, int minute, Task task) async {
+  Future<void> scheduledNotification(BuildContext context,int hour, int minute, Task task) async {
     tz.initializeTimeZones();
-    _configureNotificationSubject();
+    _configureNotificationSubject(context);
     //assignment for _local field in tz
     //without this line you'll get error because _local isn't initialized
     tz.setLocalLocation(
         tz.getLocation(await FlutterTimezone.getLocalTimezone()));
 
-    await flutterLocalNotificationsPlugin.zonedSchedule(
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
       task.id!,
       task.title,
       task.note,
@@ -80,7 +82,7 @@ class NotifyHelper {
       iOS: iOSPlatformChannelSpecifics,
     );
     //Core part of the method (What will be written in the notification)
-    await flutterLocalNotificationsPlugin.show(
+    await _flutterLocalNotificationsPlugin.show(
       0,
       title,
       body,
@@ -90,7 +92,7 @@ class NotifyHelper {
   }
 
   void requestIOSPermissions() {
-    flutterLocalNotificationsPlugin
+    _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(
@@ -102,14 +104,14 @@ class NotifyHelper {
 
   
 
-  void _configureNotificationSubject() {
+  void _configureNotificationSubject(BuildContext context) {
     notificationSubject.stream.listen((String payload) async {
-      Get.to(() => NotificationPage(payload: payload));
+      Navigator.push(context,MaterialPageRoute(builder:(_) =>NotificationPage(payload: payload) ,));
     });
   }
 
   cancelNotification(int notificationId) async {
-    await flutterLocalNotificationsPlugin.cancel(notificationId);
+    await _flutterLocalNotificationsPlugin.cancel(notificationId);
   }
 
   initializeNotification() async {
@@ -128,7 +130,7 @@ class NotifyHelper {
       android: androidInitializationSettings,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(
+    await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (details) {
         if(details.payload!=null) {

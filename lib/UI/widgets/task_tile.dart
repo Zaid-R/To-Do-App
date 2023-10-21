@@ -1,24 +1,24 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:to_do_app/UI/theme.dart';
 import 'package:to_do_app/models/task.dart';
 
+@immutable
 class TaskTile extends StatelessWidget {
   final Task? task;
-  TaskTile(this.task);
+  const TaskTile(this.task,{super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width*0.9,
+      width: MediaQuery.of(context).size.width * 0.9,
       margin: const EdgeInsets.only(bottom: 12),
       child: Container(
         padding: const EdgeInsets.all(16),
         //  width: SizeConfig.screenWidth * 0.78,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: _getBGColor(task?.color??0),
+          color: _getBGColor(task?.color ?? 0),
         ),
         child: Row(children: [
           Expanded(
@@ -26,7 +26,7 @@ class TaskTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  task?.title??"",
+                  task?.title ?? "",
                   style: GoogleFonts.lato(
                     textStyle: const TextStyle(
                         fontSize: 16,
@@ -50,14 +50,14 @@ class TaskTile extends StatelessWidget {
                       "${task!.startTime} - ${task!.endTime}",
                       style: GoogleFonts.lato(
                         textStyle:
-                        TextStyle(fontSize: 13, color: Colors.grey[100]),
+                            TextStyle(fontSize: 13, color: Colors.grey[100]),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  task?.note??"",
+                  task?.note ?? "",
                   style: GoogleFonts.lato(
                     textStyle: TextStyle(fontSize: 15, color: Colors.grey[100]),
                   ),

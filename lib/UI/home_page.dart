@@ -2,16 +2,16 @@ import 'dart:io';
 import 'package:date_picker_timeline/date_picker_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_app/UI/add_task_page.dart';
 import 'package:to_do_app/UI/theme.dart';
 import 'package:to_do_app/UI/widgets/add_task_button.dart';
 import 'package:to_do_app/UI/widgets/task_tile.dart';
-import 'package:to_do_app/controllers/task_controller.dart';
 import 'package:to_do_app/models/task.dart';
 import 'package:to_do_app/services/notification_services.dart';
-import 'package:to_do_app/services/theme_services.dart';
+import 'package:to_do_app/task_provider.dart';
+import 'package:to_do_app/theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,9 +22,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late NotifyHelper notifyHelper;
-  var themeServices = ThemeServices();
   DateTime selectedDate = DateTime.now();
-  var taskController = TaskController();
 
   @override
   void initState() {
@@ -41,16 +39,18 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final taskProvider = context.watch<TaskProvider>();
     return Scaffold(
-      backgroundColor: context.theme.backgroundColor,
-      appBar: buildAppBar(),
+      backgroundColor: Theme.of(context).backgroundColor,
+      appBar: buildAppBar(themeProvider),
       body: buildTemplate(children: [
-        buildTaskBar(),
+        buildTaskBar(themeProvider),
         buildDatePicker(),
         const SizedBox(
           height: 10,
         ),
-        showTasks()
+        showTasks(themeProvider,taskProvider)
       ]),
     );
   }
@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildTaskBar() {
+  Widget buildTaskBar(ThemeProvider themeProvider) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -73,36 +73,37 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               DateFormat.yMMMMd().format(DateTime.now()),
-              style: subHeadingStyle,
+              style: subHeadingStyle(themeProvider.isDarkMode),
             ),
             Text(
               'Today',
-              style: headingStyle,
+              style: headingStyle(themeProvider.isDarkMode),
             )
           ],
         ),
         AddTaskButton(
             label: '+ Add Task',
             onTap: () async {
-              await Get.to(() => AddTaskPage());
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const AddTaskPage()));
               //To refresh task list in task controller
-              taskController.getTasks();
+              //taskController.getTasks();
             })
       ],
     );
   }
 
-  AppBar buildAppBar() {
+  AppBar buildAppBar(ThemeProvider themeProvider) {
     return AppBar(
       elevation: 0,
-      backgroundColor: context.theme.backgroundColor,
+      backgroundColor: Theme.of(context).backgroundColor,
       leading: GestureDetector(
         onTap: () {
           // var title =
           //     '${themeServices.getTheme() == ThemeMode.dark ? 'Dark' : 'Light'} theme activated';
           // String body = 'Theme changed';
 
-          themeServices.switchTheme();
+          context.read<ThemeProvider>().switchTheme();
           notifyHelper.displayNotification(title: ' title', body: 'body');
           // notifyHelper.scheduledNotification(
           //   0,
@@ -112,7 +113,9 @@ class _HomePageState extends State<HomePage> {
           // );
         },
         child: Icon(
-          Get.isDarkMode ? Icons.wb_sunny_outlined : Icons.nightlight_rounded,
+          themeProvider.isDarkMode
+              ? Icons.wb_sunny_outlined
+              : Icons.nightlight_rounded,
           size: 20,
         ),
       ),
@@ -144,17 +147,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget showTasks() {
-    taskController.getTasks();
+  Widget showTasks(ThemeProvider themeProvider, TaskProvider taskProvider) {
     return Expanded(
         //Obx used with observable objects
-        child: Obx(
-      () {
-        return ListView.builder(
-            itemCount: taskController.taskList.length,
-            itemBuilder: (_, index) {
+        child: ListView.builder(
+            itemCount: taskProvider.taskList.length,
+            itemBuilder: (context, index) {
               //print('task list lenght = ${taskController.taskList.length}');
-              var task = taskController.taskList[index];
+              var task = taskProvider.taskList[index];
               print('Pure start time of task = ${task.startTime}');
               //I use Hm() because the time is in 24 hour format, not Jm() which is for AM PM format
               DateTime taskStartTime =
@@ -169,7 +169,8 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            biuldBottomSheet(context, task);
+                            biuldBottomSheet(
+                                context, task, themeProvider, taskProvider);
                           },
                           child: TaskTile(task),
                         )
@@ -187,9 +188,10 @@ class _HomePageState extends State<HomePage> {
                   .compareTo(DateTime.parse('${taskDateSplit[2]}-$month-$day'));
               if ((task.repeat == 'Daily' && compareDateResult >= 0) ||
                   compareDateResult == 0) {
-                    print('hour = ${formatedStartTime[0]}');
+                print('hour = ${formatedStartTime[0]}');
                 //scheduled notification
                 notifyHelper.scheduledNotification(
+                    context,
                     int.parse(formatedStartTime[0]),
                     int.parse(formatedStartTime[1]),
                     task);
@@ -197,66 +199,73 @@ class _HomePageState extends State<HomePage> {
               } else {
                 return Container();
               }
-            });
-      },
-    ));
+            }));
   }
 
-  void biuldBottomSheet(BuildContext context, Task task) {
-    Get.bottomSheet(Container(
-      padding: const EdgeInsets.only(top: 4),
-      //Note****: try ommit using height and just pust ternary operator on the completed button itself, since the container has dynamic size by default
-      height: context.mediaQuery.size.height *
-          (task.isCompleted == 1 ? 0.24 : 0.32),
-      width: context.mediaQuery.size.width,
-      color: Get.isDarkMode ? darkGreyColor : Colors.white,
-      child: Column(
-        children: [
-          //small bar appaer at the top of the bottom sheet
-          Container(
-            height: 6,
-            width: 120,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.grey[Get.isDarkMode ? 600 : 300]),
-          ),
-          task.isCompleted == 1
-              ? Container()
-              : biuldBottomSheetButton(
-                  label: 'Task Completed',
-                  onTap: () {
-                    taskController.markTaskCompleted(task.id!);
-                    Get.back();
-                  },
-                  context: context,
-                  color: bluishColor),
-          biuldBottomSheetButton(
-              label: 'Delete Task',
-              onTap: () {
-                notifyHelper.cancelNotification(task.id!);
-                taskController.deleteTask(task.id!);
-                Get.back();
-              },
-              context: context,
-              color: Colors.red),
-          const SizedBox(
-            height: 15,
-          ),
-          biuldBottomSheetButton(
-              label: 'Close',
-              onTap: () {
-                Get.back();
-              },
-              context: context,
-              color: whiteColor,
-              isCloseButton: true),
-        ],
-      ),
-    ));
+  void biuldBottomSheet(BuildContext context, Task task,
+      ThemeProvider themeProvider, TaskProvider taskProvider) {
+    showBottomSheet(
+        context: context,
+        builder: (innerContext) => Container(
+              padding: const EdgeInsets.only(top: 4),
+              //Note****: try ommit using height and just pust ternary operator on the completed button itself, since the container has dynamic size by default
+              height: MediaQuery.of(context).size.height *
+                  (task.isCompleted == 1 ? 0.24 : 0.32),
+              width: MediaQuery.of(context).size.width,
+              color: themeProvider.isDarkMode ? darkGreyColor : Colors.white,
+              child: Column(
+                children: [
+                  //small bar appaer at the top of the bottom sheet
+                  Container(
+                    height: 6,
+                    width: 120,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color:
+                            Colors.grey[themeProvider.isDarkMode ? 600 : 300]),
+                  ),
+                  task.isCompleted == 1
+                      ? Container()
+                      //TODO: add copyWith() to biuldBottomSheetButton to decrease amount of code below
+                      : biuldBottomSheetButton(
+                        themeProvider: themeProvider,
+                          label: 'Task Completed',
+                          onTap: () {
+                            taskProvider.markTaskCompleted(task.id!);
+                            Navigator.pop(context);
+                          },
+                          context: context,
+                          color: bluishColor),
+                  biuldBottomSheetButton(
+                    themeProvider: themeProvider,
+                      label: 'Delete Task',
+                      onTap: () {
+                        notifyHelper.cancelNotification(task.id!);
+                        taskProvider.deleteTask(task.id!);
+                        Navigator.pop(context);
+                      },
+                      context: context,
+                      color: Colors.red),
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  biuldBottomSheetButton(
+                      themeProvider: themeProvider,
+                      label: 'Close',
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      context: context,
+                      color: whiteColor,
+                      isCloseButton: true),
+                ],
+              ),
+            ));
   }
 
   biuldBottomSheetButton(
-      {required String label,
+      {required ThemeProvider themeProvider,
+      required String label,
       required Function()? onTap,
       required Color color,
       required BuildContext context,
@@ -266,22 +275,22 @@ class _HomePageState extends State<HomePage> {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
-        height: context.mediaQuery.size.height * 0.07,
-        width: context.mediaQuery.size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.07,
+        width: MediaQuery.of(context).size.width * 0.9,
         decoration: BoxDecoration(
             color: isCloseButton ? Colors.transparent : color,
             border: Border.all(
               width: 2,
               color: isCloseButton
-                  ? Colors.grey[Get.isDarkMode ? 600 : 300]!
+                  ? Colors.grey[themeProvider.isDarkMode ? 600 : 300]!
                   : color,
             ),
             borderRadius: BorderRadius.circular(20)),
         child: Center(
             child: Text(label,
                 style: isCloseButton
-                    ? titleStyle
-                    : titleStyle.copyWith(color: whiteColor))),
+                    ? titleStyle(themeProvider.isDarkMode)
+                    : titleStyle(themeProvider.isDarkMode).copyWith(color: whiteColor))),
       ),
     );
   }

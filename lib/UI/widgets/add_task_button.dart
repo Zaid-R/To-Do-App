@@ -1,7 +1,8 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 
 import 'package:to_do_app/UI/theme.dart';
+
+@immutable
 class AddTaskButton extends StatelessWidget {
   final String label;
   final Function()? onTap;

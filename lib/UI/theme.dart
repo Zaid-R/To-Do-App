@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 const Color bluishColor = Color(0xFF4e5ae8);
@@ -37,20 +36,20 @@ TextStyle buildGoogleFontsStyle(double? fontSize,Color? color,FontWeight? fontWe
 
 
 //public
-TextStyle get subHeadingStyle{
-  var color = Colors.grey[Get.isDarkMode?400:500];
+TextStyle subHeadingStyle(bool isDarkMode){
+  var color = Colors.grey[isDarkMode?400:500];
   return buildGoogleFontsStyle(20,color,FontWeight.w400);
 }
 
-TextStyle get headingStyle{
-  var color = Get.isDarkMode?whiteColor:Colors.black;
+TextStyle headingStyle(bool isDarkMode){
+  var color = isDarkMode?whiteColor:Colors.black;
   return buildGoogleFontsStyle(26,color,FontWeight.bold);
 }
-
-TextStyle get titleStyle{
-  return headingStyle.copyWith(fontSize:16,fontWeight: FontWeight.w600);
+//TODO: find a way to remove parameter isDarkMode from these methods
+TextStyle titleStyle(bool isDarkMode){
+  return headingStyle(isDarkMode).copyWith(fontSize:16,fontWeight: FontWeight.w600);
 }
 
-TextStyle get subTitleStyle{
-  return buildGoogleFontsStyle(14, Colors.grey[Get.isDarkMode?100:400], FontWeight.w400);
+TextStyle subTitleStyle(bool isDarkMode){
+  return buildGoogleFontsStyle(14, Colors.grey[isDarkMode?100:400], FontWeight.w400);
 }

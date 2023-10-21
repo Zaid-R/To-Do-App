@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_app/UI/home_page.dart';
 import 'package:to_do_app/UI/theme.dart';
 import 'package:to_do_app/database/database_helper.dart';
-import 'package:to_do_app/services/theme_services.dart';
-
-void main() async{
+import 'package:to_do_app/task_provider.dart';
+import 'package:to_do_app/theme_provider.dart';
+//TODO: remove print statements from the app
+void main() async {
   //WidgetFlutterBinding is used to interact with the Flutter engine
   //GetStorage.init() needs to call native code to initialize GetStorage
   //and since the plugin needs to use platform channels to call the native code,which is done asynchronously
@@ -15,7 +16,14 @@ void main() async{
   await DBHelper.initDB();
   //getStorage has to be initialized in the entry point of the app
   await GetStorage.init();
-  runApp(const MyApp());
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+    ),
+    ChangeNotifierProvider(
+      create: (_) => TaskProvider(),
+    ),
+  ], child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -23,14 +31,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //MaterialApp + Getx properties = GetMaterialApp
-    return GetMaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: Themes.light,
-      darkTheme: Themes.dark,
-      themeMode: ThemeServices().getTheme(),
-      home: HomePage()
+    final appTheme = context.select<ThemeProvider,ThemeMode>(
+      (provider)=>provider.getTheme
     );
+    return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: Themes.light,
+        darkTheme: Themes.dark,
+        themeMode: appTheme,
+        home: const HomePage());
   }
 }

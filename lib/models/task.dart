@@ -25,6 +25,10 @@ class Task {
     this.repeat,
   });
 
+  void setIsCompleted(){
+     isCompleted=1;
+  }
+
   Map<String, dynamic> convertDataToJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
@@ -52,4 +56,11 @@ class Task {
     remind = json['remind'];
     repeat = json['repeat'];
   }
+
+  @override
+  operator == (covariant Task other)=> id == other.id;
+  
+  @override
+  int get hashCode => id.hashCode;
+  
 }

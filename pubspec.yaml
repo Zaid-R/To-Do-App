@@ -6,32 +6,31 @@ environment:
   sdk: '>=3.1.1 <4.0.0'
 
 dependencies:
+  cupertino_icons: ^1.0.2
+  date_picker_timeline: null
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.2
-  get_storage:
-  intl:
-  get:
-  flutter_staggered_animations: 
-  flutter_local_notifications: 
-  flutter_timezone: 
-  flutter_launcher_icons:
-  google_fonts:  
-  date_picker_timeline: 
-  sqflite:
-  timezone:
-  rxdart:
+  flutter_launcher_icons: null
+  flutter_local_notifications: null
+  flutter_staggered_animations: null
+  flutter_timezone: null
+  get_storage: null
+  google_fonts: null
+  intl: null
+  provider: ^6.0.5
+  rxdart: null
+  sqflite: null
+  timezone: null
 
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/to_do_app_icon.png"
 
-
 dev_dependencies:
+  flutter_lints: ^2.0.0
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true

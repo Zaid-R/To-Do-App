@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_app/UI/theme.dart';
 import 'package:to_do_app/UI/widgets/add_task_button.dart';
 import 'package:to_do_app/UI/widgets/input_field.dart';
-import 'package:to_do_app/controllers/task_controller.dart';
 import 'package:to_do_app/models/task.dart';
+import 'package:to_do_app/task_provider.dart';
+import 'package:to_do_app/theme_provider.dart';
 
 class AddTaskPage extends StatefulWidget {
   const AddTaskPage({super.key});
@@ -15,12 +16,12 @@ class AddTaskPage extends StatefulWidget {
 }
 
 class _AddTaskPageState extends State<AddTaskPage> {
-  final TaskController taskController = TaskController();
   final TextEditingController titleController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
   DateTime selectedDate = DateTime.now();
   String startTime = DateFormat.Hm().format(DateTime.now());
-  String endTime = DateFormat.Hm().format(DateTime.now().add(const Duration(hours: 1)));
+  String endTime =
+      DateFormat.Hm().format(DateTime.now().add(const Duration(hours: 1)));
   int selectedRemid = 5;
   List<int> remindList = [5, 10, 15, 20];
   List<String> repeatList = ['None', 'Daily', 'Weekly', 'Monthly'];
@@ -31,20 +32,21 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>(); 
     return Scaffold(
-      backgroundColor: context.theme.backgroundColor,
+      backgroundColor: Theme.of(context).backgroundColor,
       appBar: buildAppBar(context),
       body:
           //He used SingleChildScrollView(child: Column()), and I remember that ListView is an alternative for the previous mix, so I'll try
           ListView(
         //Since ListView has padding property I think I can ommit using Container as parent widget for ListView to use its padding
         padding: const EdgeInsets.symmetric(horizontal: 20),
-         
+
         children: [
           //Add Task label
           Text(
             'Add Task',
-            style: headingStyle,
+            style: headingStyle(themeProvider.isDarkMode),
           ),
           //title field
           InputField(
@@ -83,12 +85,15 @@ class _AddTaskPageState extends State<AddTaskPage> {
           ),
           //Remind field
           buildDropdownButton(
+              themeProvider: themeProvider,
               title: 'Remind',
               hint: '$selectedRemid minutes early',
               items: remindList,
-              onChange:(value)=>setState(()=>selectedRemid = value)),
+              //TODO: remove setState, instead use provider
+              onChange: (value) => setState(() => selectedRemid = value)),
           //Repeat field
           buildDropdownButton(
+            themeProvider: themeProvider,
               title: 'Repeat',
               hint: selectedRepeat,
               items: repeatList,
@@ -99,14 +104,14 @@ class _AddTaskPageState extends State<AddTaskPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                buildColorPallete(),
+                buildColorPallete(themeProvider),
                 AddTaskButton(
                   label: 'Create Task',
                   onTap: () async {
                     bool isTaskValid = validateDate();
                     if (isTaskValid) {
                       addTaskToDB();
-                      Get.back();
+                      Navigator.pop(context);
                     }
                   },
                 )
@@ -120,7 +125,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
 
   void addTaskToDB() async {
     try {
-      var idValue = await taskController.addTask(
+      var idValue = await context.read<TaskProvider>().addTask(
           task: Task(
         note: noteController.text,
         title: titleController.text,
@@ -143,11 +148,10 @@ class _AddTaskPageState extends State<AddTaskPage> {
     //   Get.back();
     // } else
     if (titleController.text.isEmpty || noteController.text.isEmpty) {
-      Get.snackbar('Required', 'All fields are required !',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: whiteColor,
-          colorText: pinkColor,
-          icon: Icon(Icons.warning_amber_rounded));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('All fields are required !'),
+        backgroundColor: whiteColor,
+      ));
       return false;
     }
     return true;
@@ -171,7 +175,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
   }
 
   InputField buildDropdownButton(
-      {required String title,
+      {
+        required ThemeProvider themeProvider,
+        required String title,
       required String hint,
       required List<dynamic> items,
       required Function(dynamic value) onChange
@@ -189,7 +195,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
           ),
           iconSize: 32,
           elevation: 4,
-          style: subTitleStyle,
+          style: subTitleStyle(themeProvider.isDarkMode),
           items: items
               .map((item) => DropdownMenuItem(
                     value: item,
@@ -203,9 +209,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
       elevation: 0,
-      backgroundColor: context.theme.backgroundColor,
+      backgroundColor: Theme.of(context).backgroundColor,
       leading: GestureDetector(
-        onTap: () => Get.back(),
+        onTap: () => Navigator.pop(context),
         child: const Icon(
           Icons.arrow_back_ios,
           size: 20,
@@ -255,7 +261,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
     }
   }
 
-  Widget buildColorPallete() {
+  Widget buildColorPallete(ThemeProvider themeProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -263,7 +269,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
           padding: const EdgeInsets.only(bottom: 10),
           child: Text(
             'Color',
-            style: titleStyle,
+            style: titleStyle(themeProvider.isDarkMode),
           ),
         ),
         Wrap(
