@@ -1,0 +1,39 @@
+name: to_do_app
+description: A new Flutter project.
+publish_to: 'none'
+version: 1.0.0+1
+environment:
+  sdk: '>=3.1.1 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  get_storage:
+  intl:
+  get:
+  flutter_staggered_animations: 
+  flutter_local_notifications: 
+  flutter_timezone: 
+  flutter_launcher_icons:
+  google_fonts:  
+  date_picker_timeline: 
+  sqflite:
+  timezone:
+  rxdart:
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/to_do_app_icon.png"
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets\circle_avatar.png
