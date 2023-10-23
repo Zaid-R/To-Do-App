@@ -6,6 +6,7 @@ import 'package:to_do_app/UI/theme.dart';
 import 'package:to_do_app/database/database_helper.dart';
 import 'package:to_do_app/task_provider.dart';
 import 'package:to_do_app/theme_provider.dart';
+
 //TODO: remove print statements from the app
 void main() async {
   //WidgetFlutterBinding is used to interact with the Flutter engine
@@ -31,15 +32,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appTheme = context.select<ThemeProvider,ThemeMode>(
-      (provider)=>provider.getTheme
+    return Consumer<ThemeProvider>(
+      builder: (_, provider, __) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Flutter Demo',
+          theme: Themes.light,
+          darkTheme: Themes.dark,
+          themeMode: provider.getTheme,
+          home: const HomePage()),
     );
-    return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
-        theme: Themes.light,
-        darkTheme: Themes.dark,
-        themeMode: appTheme,
-        home: const HomePage());
   }
 }
